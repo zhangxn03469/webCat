@@ -23,11 +23,10 @@
 
     <div id="settingsContainer" class="settings-container" style="display: none;">
       <div class="setting-item">
-        <label for="intervalType">工作时长：</label>
-        <select id="intervalType">
-          <option value="hourly">每小时</option>
-          <option value="halfhourly">每半小时</option>
-        </select>
+        <label for="workDuration">工作时长：</label>
+        <input type="number" id="workDuration" min="1" value="60">
+        <span class="unit">分钟</span>
+        <small class="hint">不能为0分钟</small>
       </div>
 
       <div class="setting-item">
@@ -53,6 +52,8 @@
       </div>
 
       <button id="saveSettings" class="save-btn">保存设置</button>
+      
+      <button id="testRest" class="test-btn" style="margin-top: 10px; background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);">立即测试休息遮罩</button>
       
       <div class="status-info">
         <p id="currentStatus">当前状态：未设置</p>

@@ -13,20 +13,18 @@ function createOverlay() {
   overlayElement.id = 'cat-gatekeeper-overlay';
   overlayElement.className = 'hidden';
   overlayElement.innerHTML = `
+    <div class="overlay-bg" id="cat-gatekeeper-bg"></div>
     <div class="overlay-content">
-      <h1 class="title">该休息一下了 💕</h1>
-      <p class="subtitle">让眼睛和大脑放松片刻吧</p>
-      <div class="image-container">
-        <img id="cat-gatekeeper-image" src="" alt="休息时间">
-      </div>
+      <h1 class="title">🐱 该休息一下了</h1>
+      <p class="subtitle">小猫咪来监督你休息啦~</p>
       <div class="countdown-container">
         <p class="countdown-label">休息倒计时</p>
         <div class="countdown-time" id="cat-gatekeeper-countdown">00:00</div>
       </div>
       <div class="tips">
-        <p>👀 看向远处，让眼睛得到放松</p>
-        <p>🧘 站起来活动一下身体</p>
-        <p>💧 喝杯水，保持身体水分</p>
+        <p>👀 看远方</p>
+        <p>🧘 活动身体</p>
+        <p>💧 喝杯水</p>
       </div>
     </div>
   `;
@@ -48,12 +46,12 @@ async function showOverlay(endTime) {
   restEndTime = endTime;
 
   const customImage = await getCustomImage();
-  const imageElement = document.getElementById('cat-gatekeeper-image');
+  const bgElement = document.getElementById('cat-gatekeeper-bg');
   
   if (customImage) {
-    imageElement.src = customImage;
+    bgElement.style.backgroundImage = `url(${customImage})`;
   } else {
-    imageElement.src = DEFAULT_CAT_IMAGE;
+    bgElement.style.backgroundImage = `url(${DEFAULT_CAT_IMAGE})`;
   }
 
   updateCountdown();
@@ -71,10 +69,23 @@ async function showOverlay(endTime) {
 }
 
 function hideOverlay() {
-  if (overlayElement) {
+  if (!overlayElement) {
+    return;
+  }
+
+  const endingText = document.createElement('div');
+  endingText.className = 'rest-ending';
+  endingText.textContent = '休息完成！喵~';
+  overlayElement.querySelector('.overlay-content').appendChild(endingText);
+  
+  setTimeout(() => {
     overlayElement.classList.add('hidden');
     document.body.style.overflow = '';
-  }
+    
+    if (endingText && endingText.parentNode) {
+      endingText.remove();
+    }
+  }, 2000);
   
   if (countdownInterval) {
     clearInterval(countdownInterval);
@@ -123,6 +134,8 @@ function updateCountdownFromTime(remainingTime) {
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  console.log('Content script received message:', request);
+  
   switch (request.action) {
     case 'showOverlay':
       showOverlay(request.restEndTime);

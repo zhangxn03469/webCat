@@ -4,12 +4,8 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.9);
+  background: rgba(0, 0, 0, 0.85);
   z-index: 999999;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
   font-family: 'Microsoft YaHei', Arial, sans-serif;
   color: white;
   overflow: hidden;
@@ -21,75 +17,144 @@
   padding: 0;
 }
 
+#cat-gatekeeper-overlay .overlay-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  opacity: 0.3;
+  z-index: 1;
+}
+
 #cat-gatekeeper-overlay .overlay-content {
-  text-align: center;
-  max-width: 800px;
-  padding: 40px;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
 }
 
 #cat-gatekeeper-overlay .title {
-  font-size: 32px;
+  font-size: 36px;
   font-weight: 600;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
   color: #fff;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
+  animation: fadeInUp 0.8s ease-out;
 }
 
 #cat-gatekeeper-overlay .subtitle {
-  font-size: 18px;
-  margin-bottom: 40px;
-  color: #ccc;
+  font-size: 20px;
+  margin-bottom: 30px;
+  color: #ffd700;
+  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.5);
+  animation: fadeInUp 0.8s ease-out 0.2s backwards;
 }
 
-#cat-gatekeeper-overlay .image-container {
+#cat-gatekeeper-overlay .cat-container {
   width: 400px;
   height: 300px;
-  margin: 0 auto 40px;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeInUp 0.8s ease-out 0.3s backwards;
 }
 
-#cat-gatekeeper-overlay .image-container img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+#cat-gatekeeper-overlay .cat-container img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
 }
 
 #cat-gatekeeper-overlay .countdown-container {
-  background: rgba(255, 255, 255, 0.1);
-  padding: 30px 50px;
-  border-radius: 12px;
-  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.15);
+  padding: 25px 60px;
+  border-radius: 20px;
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  text-align: center;
+  animation: fadeInUp 0.8s ease-out 0.4s backwards;
 }
 
 #cat-gatekeeper-overlay .countdown-label {
-  font-size: 16px;
-  color: #aaa;
-  margin-bottom: 10px;
+  font-size: 18px;
+  color: #e0e0e0;
+  margin-bottom: 12px;
+  letter-spacing: 2px;
 }
 
 #cat-gatekeeper-overlay .countdown-time {
-  font-size: 64px;
+  font-size: 72px;
   font-weight: 700;
-  color: #667eea;
-  text-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+  color: #ffa500;
+  text-shadow: 0 0 30px rgba(255, 165, 0, 0.6);
+  font-family: 'Courier New', monospace;
 }
 
 #cat-gatekeeper-overlay .tips {
-  margin-top: 30px;
-  font-size: 14px;
-  color: #999;
+  margin-top: 25px;
+  font-size: 15px;
+  color: #bbb;
+  text-align: center;
+  animation: fadeInUp 0.8s ease-out 0.6s backwards;
 }
 
 #cat-gatekeeper-overlay .tips p {
-  margin-bottom: 8px;
+  margin-bottom: 10px;
+  padding: 8px 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  display: inline-block;
+  margin-right: 10px;
+}
+
+#cat-gatekeeper-overlay .tips p:last-child {
+  margin-right: 0;
+}
+
+#cat-gatekeeper-overlay .image-container {
+  display: none;
 }
 
 #cat-gatekeeper-overlay .loading {
   font-size: 24px;
-  color: #667eea;
+  color: #ffa500;
   animation: pulse 1.5s infinite;
+}
+
+#cat-gatekeeper-overlay .hidden {
+  display: none !important;
+}
+
+#cat-gatekeeper-overlay .rest-ending {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 48px;
+  font-weight: 700;
+  color: #ffa500;
+  text-shadow: 0 0 40px rgba(255, 165, 0, 0.8);
+  animation: restEnding 1.5s ease-out forwards;
+  z-index: 100;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes pulse {
@@ -101,6 +166,17 @@
   }
 }
 
-#cat-gatekeeper-overlay .hidden {
-  display: none !important;
+@keyframes restEnding {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.5);
+  }
 }

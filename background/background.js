@@ -2,25 +2,50 @@ let isTimerRunning = false;
 let isResting = false;
 let restEndTime = null;
 let countdownInterval = null;
+let currentWorkDuration = 60;
+let currentRestDuration = 5;
+
+function initializeFromStorage() {
+  chrome.storage.local.get(['workDuration', 'restDuration', 'isEnabled'], (result) => {
+    if (result.workDuration && result.workDuration > 0) {
+      currentWorkDuration = result.workDuration;
+    }
+    if (result.restDuration && result.restDuration >= 1 && result.restDuration <= 10) {
+      currentRestDuration = result.restDuration;
+    }
+    console.log(`Initialized from storage: work=${currentWorkDuration}min, rest=${currentRestDuration}min`);
+  });
+}
+
+initializeFromStorage();
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.set({
     isEnabled: false,
-    intervalType: 'hourly',
+    workDuration: 60,
     restDuration: 5
   });
 });
 
 chrome.storage.onChanged.addListener((changes, namespace) => {
-  if (namespace === 'local' && changes.isEnabled) {
-    if (changes.isEnabled.newValue) {
-      chrome.storage.local.get(['intervalType', 'restDuration'], (settings) => {
-        if (settings.intervalType && settings.restDuration) {
-          startTimer(settings.intervalType, settings.restDuration);
-        }
-      });
-    } else {
-      stopTimer();
+  if (namespace === 'local') {
+    if (changes.workDuration && changes.workDuration.newValue > 0) {
+      currentWorkDuration = changes.workDuration.newValue;
+    }
+    if (changes.restDuration && changes.restDuration.newValue >= 1 && changes.restDuration.newValue <= 10) {
+      currentRestDuration = changes.restDuration.newValue;
+    }
+    
+    if (changes.isEnabled) {
+      if (changes.isEnabled.newValue) {
+        chrome.storage.local.get(['workDuration', 'restDuration'], (settings) => {
+          if (settings.workDuration && settings.restDuration && settings.workDuration > 0) {
+            startTimer(settings.workDuration, settings.restDuration);
+          }
+        });
+      } else {
+        stopTimer();
+      }
     }
   }
 });
@@ -28,7 +53,7 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   switch (request.action) {
     case 'startTimer':
-      startTimer(request.intervalType, request.restDuration);
+      startTimer(request.workDuration, request.restDuration);
       sendResponse({ status: 'started' });
       break;
     case 'stopTimer':
@@ -46,8 +71,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       sendResponse({
         isResting,
         restEndTime,
-        restDuration: request.restDuration || 5
+        restDuration: request.restDuration || currentRestDuration
       });
+      break;
+    case 'testRest':
+      testRestPeriod(request.restDuration);
+      sendResponse({ status: 'testing' });
       break;
     default:
       sendResponse({ status: 'unknown action' });
@@ -55,21 +84,21 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   return true;
 });
 
-function startTimer(intervalType, restDuration) {
+function startTimer(workDuration, restDuration) {
   if (isTimerRunning) {
     stopTimer();
   }
 
   isTimerRunning = true;
-  
-  const intervalMinutes = intervalType === 'hourly' ? 60 : 30;
+  currentWorkDuration = workDuration;
+  currentRestDuration = restDuration;
   
   chrome.alarms.create('workTimer', {
-    delayInMinutes: intervalMinutes,
-    periodInMinutes: intervalMinutes
+    delayInMinutes: workDuration,
+    periodInMinutes: workDuration
   });
 
-  console.log(`Timer started: ${intervalType} interval, ${restDuration} minute rest`);
+  console.log(`Timer started: work for ${workDuration} minutes, rest for ${restDuration} minutes`);
 }
 
 function stopTimer() {
@@ -90,6 +119,22 @@ function stopTimer() {
   console.log('Timer stopped');
 }
 
+function testRestPeriod(restDuration) {
+  console.log(`Starting test rest period for ${restDuration} minutes`);
+  
+  isResting = true;
+  restEndTime = Date.now() + (restDuration * 60 * 1000);
+  currentRestDuration = restDuration;
+  
+  startCountdown();
+  
+  notifyAllTabs({
+    action: 'showOverlay',
+    restEndTime: restEndTime,
+    restDuration: restDuration
+  });
+}
+
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === 'workTimer') {
     startRestPeriod();
@@ -99,26 +144,22 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 });
 
 function startRestPeriod() {
-  chrome.storage.local.get(['restDuration'], (settings) => {
-    const restMinutes = settings.restDuration || 5;
-    
-    isResting = true;
-    restEndTime = Date.now() + (restMinutes * 60 * 1000);
-    
-    chrome.alarms.create('restTimer', {
-      delayInMinutes: restMinutes
-    });
-    
-    startCountdown();
-    
-    notifyAllTabs({
-      action: 'showOverlay',
-      restEndTime: restEndTime,
-      restDuration: restMinutes
-    });
-    
-    console.log(`Rest period started for ${restMinutes} minutes`);
+  isResting = true;
+  restEndTime = Date.now() + (currentRestDuration * 60 * 1000);
+  
+  chrome.alarms.create('restTimer', {
+    delayInMinutes: currentRestDuration
   });
+  
+  startCountdown();
+  
+  notifyAllTabs({
+    action: 'showOverlay',
+    restEndTime: restEndTime,
+    restDuration: currentRestDuration
+  });
+  
+  console.log(`Rest period started for ${currentRestDuration} minutes`);
 }
 
 function endRestPeriod() {
@@ -132,7 +173,15 @@ function endRestPeriod() {
   
   notifyAllTabs({ action: 'hideOverlay' });
   
-  console.log('Rest period ended');
+  console.log('Rest period ended, starting next work cycle');
+  
+  if (isTimerRunning && currentWorkDuration > 0) {
+    chrome.alarms.create('workTimer', {
+      delayInMinutes: currentWorkDuration,
+      periodInMinutes: currentWorkDuration
+    });
+    console.log(`Next work cycle started: ${currentWorkDuration} minutes`);
+  }
 }
 
 function startCountdown() {
