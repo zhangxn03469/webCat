@@ -1,6 +1,7 @@
 let overlayElement = null;
 let countdownInterval = null;
 let countdownRAFId = null;
+let hideTimeoutId = null;
 let restEndTime = null;
 let walkingCats = [];
 let catAnimationId = null;
@@ -256,6 +257,19 @@ function stopCatAnimations() {
   }
 }
 
+function forceHideOverlay() {
+  const overlays = document.querySelectorAll('#cat-gatekeeper-overlay');
+  overlays.forEach(overlay => {
+    overlay.style.display = 'none';
+    overlay.classList.add('hidden');
+    overlay.removeAttribute('style');
+    overlay.style.display = 'none';
+  });
+  
+  document.body.style.overflow = '';
+  document.body.style.position = '';
+}
+
 function updateCountdownRAF() {
   if (!restEndTime) {
     return;
@@ -298,17 +312,32 @@ async function showOverlay(endTime) {
     cancelAnimationFrame(countdownRAFId);
   }
   
+  if (hideTimeoutId) {
+    clearTimeout(hideTimeoutId);
+  }
+  
   countdownInterval = setInterval(() => {
     updateCountdown();
   }, 1000);
 
   countdownRAFId = requestAnimationFrame(updateCountdownRAF);
 
-  overlayElement.classList.remove('hidden');
+  const totalDuration = endTime - Date.now() + 2000;
+  hideTimeoutId = setTimeout(() => {
+    console.log('Cat GateKeeper: Safety timeout triggered, forcing hide overlay');
+    hideOverlay();
+  }, totalDuration);
+
+  if (overlayElement) {
+    overlayElement.classList.remove('hidden');
+    overlayElement.style.display = 'flex';
+  }
   document.body.style.overflow = 'hidden';
 }
 
 function hideOverlay() {
+  console.log('Cat GateKeeper: hideOverlay called');
+  
   if (countdownInterval) {
     clearInterval(countdownInterval);
     countdownInterval = null;
@@ -319,23 +348,29 @@ function hideOverlay() {
     countdownRAFId = null;
   }
   
+  if (hideTimeoutId) {
+    clearTimeout(hideTimeoutId);
+    hideTimeoutId = null;
+  }
+  
   restEndTime = null;
-  
-  if (overlayElement) {
-    overlayElement.classList.add('hidden');
-    document.body.style.overflow = '';
-  }
-  
-  const overlayById = document.getElementById('cat-gatekeeper-overlay');
-  if (overlayById) {
-    overlayById.classList.add('hidden');
-  }
   
   try {
     stopCatAnimations();
   } catch (e) {
-    console.error('Error stopping cat animations:', e);
+    console.error('Cat GateKeeper: Error stopping cat animations:', e);
   }
+  
+  if (overlayElement) {
+    overlayElement.classList.add('hidden');
+    overlayElement.style.display = 'none';
+  }
+  
+  document.body.style.overflow = '';
+  
+  forceHideOverlay();
+  
+  console.log('Cat GateKeeper: Overlay hidden');
 }
 
 function updateCountdown() {
@@ -345,7 +380,7 @@ function updateCountdown() {
 
   const remainingTime = restEndTime - Date.now();
   
-  if (remainingTime <= 0) {
+  if (remainingTime <= 100) {
     hideOverlay();
     return;
   }
@@ -361,7 +396,7 @@ function updateCountdown() {
 }
 
 function updateCountdownFromTime(remainingTime) {
-  if (remainingTime <= 0) {
+  if (remainingTime <= 100) {
     hideOverlay();
     return;
   }
