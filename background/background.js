@@ -6,7 +6,7 @@ let countdownInterval = null;
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.set({
     isEnabled: false,
-    intervalType: 'hourly',
+    intervalMinutes: 60,
     restDuration: 5
   });
 });
@@ -14,9 +14,9 @@ chrome.runtime.onInstalled.addListener(() => {
 chrome.storage.onChanged.addListener((changes, namespace) => {
   if (namespace === 'local' && changes.isEnabled) {
     if (changes.isEnabled.newValue) {
-      chrome.storage.local.get(['intervalType', 'restDuration'], (settings) => {
-        if (settings.intervalType && settings.restDuration) {
-          startTimer(settings.intervalType, settings.restDuration);
+      chrome.storage.local.get(['intervalMinutes', 'restDuration'], (settings) => {
+        if (settings.intervalMinutes && settings.restDuration) {
+          startTimer(settings.intervalMinutes, settings.restDuration);
         }
       });
     } else {
@@ -28,7 +28,7 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   switch (request.action) {
     case 'startTimer':
-      startTimer(request.intervalType, request.restDuration);
+      startTimer(request.intervalMinutes, request.restDuration);
       sendResponse({ status: 'started' });
       break;
     case 'stopTimer':
@@ -55,21 +55,23 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   return true;
 });
 
-function startTimer(intervalType, restDuration) {
+let currentIntervalMinutes = 60;
+let currentRestDuration = 5;
+
+function startTimer(intervalMinutes, restDuration) {
   if (isTimerRunning) {
     stopTimer();
   }
 
   isTimerRunning = true;
-  
-  const intervalMinutes = intervalType === 'hourly' ? 60 : 30;
+  currentIntervalMinutes = intervalMinutes;
+  currentRestDuration = restDuration;
   
   chrome.alarms.create('workTimer', {
-    delayInMinutes: intervalMinutes,
-    periodInMinutes: intervalMinutes
+    delayInMinutes: intervalMinutes
   });
 
-  console.log(`Timer started: ${intervalType} interval, ${restDuration} minute rest`);
+  console.log(`Timer started: ${intervalMinutes} minutes interval, ${restDuration} minute rest`);
 }
 
 function stopTimer() {
@@ -132,7 +134,13 @@ function endRestPeriod() {
   
   notifyAllTabs({ action: 'hideOverlay' });
   
-  console.log('Rest period ended');
+  if (isTimerRunning) {
+    chrome.alarms.create('workTimer', {
+      delayInMinutes: currentIntervalMinutes
+    });
+  }
+  
+  console.log('Rest period ended, next work timer started');
 }
 
 function startCountdown() {

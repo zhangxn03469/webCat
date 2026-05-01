@@ -23,11 +23,12 @@
 
     <div id="settingsContainer" class="settings-container" style="display: none;">
       <div class="setting-item">
-        <label for="intervalType">工作时长：</label>
-        <select id="intervalType">
-          <option value="hourly">每小时</option>
-          <option value="halfhourly">每半小时</option>
-        </select>
+        <label for="intervalMinutes">工作时长：</label>
+        <div class="input-with-unit">
+          <input type="number" id="intervalMinutes" min="1" value="60">
+          <span class="unit">分钟</span>
+        </div>
+        <small class="hint">输入工作时长（分钟），不能为0</small>
       </div>
 
       <div class="setting-item">
