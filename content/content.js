@@ -1,5 +1,6 @@
 let overlayElement = null;
 let countdownInterval = null;
+let countdownRAFId = null;
 let restEndTime = null;
 let walkingCats = [];
 let catAnimationId = null;
@@ -255,6 +256,21 @@ function stopCatAnimations() {
   }
 }
 
+function updateCountdownRAF() {
+  if (!restEndTime) {
+    return;
+  }
+
+  const remainingTime = restEndTime - Date.now();
+  
+  if (remainingTime <= 0) {
+    hideOverlay();
+    return;
+  }
+
+  countdownRAFId = requestAnimationFrame(updateCountdownRAF);
+}
+
 async function showOverlay(endTime) {
   createOverlay();
   restEndTime = endTime;
@@ -278,28 +294,48 @@ async function showOverlay(endTime) {
     clearInterval(countdownInterval);
   }
   
+  if (countdownRAFId) {
+    cancelAnimationFrame(countdownRAFId);
+  }
+  
   countdownInterval = setInterval(() => {
     updateCountdown();
   }, 1000);
+
+  countdownRAFId = requestAnimationFrame(updateCountdownRAF);
 
   overlayElement.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
 }
 
 function hideOverlay() {
-  stopCatAnimations();
+  if (countdownInterval) {
+    clearInterval(countdownInterval);
+    countdownInterval = null;
+  }
+  
+  if (countdownRAFId) {
+    cancelAnimationFrame(countdownRAFId);
+    countdownRAFId = null;
+  }
+  
+  restEndTime = null;
   
   if (overlayElement) {
     overlayElement.classList.add('hidden');
     document.body.style.overflow = '';
   }
   
-  if (countdownInterval) {
-    clearInterval(countdownInterval);
-    countdownInterval = null;
+  const overlayById = document.getElementById('cat-gatekeeper-overlay');
+  if (overlayById) {
+    overlayById.classList.add('hidden');
   }
   
-  restEndTime = null;
+  try {
+    stopCatAnimations();
+  } catch (e) {
+    console.error('Error stopping cat animations:', e);
+  }
 }
 
 function updateCountdown() {
@@ -314,7 +350,7 @@ function updateCountdown() {
     return;
   }
 
-  const totalSeconds = Math.ceil(remainingTime / 1000);
+  const totalSeconds = Math.max(1, Math.ceil(remainingTime / 1000));
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
 
@@ -330,7 +366,7 @@ function updateCountdownFromTime(remainingTime) {
     return;
   }
 
-  const totalSeconds = Math.ceil(remainingTime / 1000);
+  const totalSeconds = Math.max(1, Math.ceil(remainingTime / 1000));
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
 
