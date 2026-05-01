@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const extensionToggle = document.getElementById('extensionToggle');
   const toggleLabel = document.getElementById('toggleLabel');
   const settingsContainer = document.getElementById('settingsContainer');
-  const intervalType = document.getElementById('intervalType');
+  const intervalMinutes = document.getElementById('intervalMinutes');
   const restDuration = document.getElementById('restDuration');
   const customImage = document.getElementById('customImage');
   const imageUploadArea = document.getElementById('imageUploadArea');
@@ -27,14 +27,14 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   function loadSettings() {
-    chrome.storage.local.get(['isEnabled', 'intervalType', 'restDuration', 'customImage'], (result) => {
+    chrome.storage.local.get(['isEnabled', 'intervalMinutes', 'restDuration', 'customImage'], (result) => {
       const isEnabled = result.isEnabled || false;
       extensionToggle.checked = isEnabled;
       toggleLabel.textContent = isEnabled ? '已开启' : '已关闭';
       settingsContainer.style.display = isEnabled ? 'flex' : 'none';
 
-      if (result.intervalType) {
-        intervalType.value = result.intervalType;
+      if (result.intervalMinutes) {
+        intervalMinutes.value = result.intervalMinutes;
       }
 
       if (result.restDuration) {
@@ -56,22 +56,21 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    if (!settings.intervalType || !settings.restDuration) {
+    if (!settings.intervalMinutes || !settings.restDuration) {
       currentStatus.textContent = '当前状态：请保存设置以启用休息提醒';
       return;
     }
 
-    const intervalText = settings.intervalType === 'hourly' ? '每小时' : '每半小时';
-    currentStatus.textContent = `当前状态：${intervalText}休息 ${settings.restDuration} 分钟`;
+    currentStatus.textContent = `当前状态：每${settings.intervalMinutes}分钟休息 ${settings.restDuration} 分钟`;
   }
 
   function updateBackgroundWorker(isEnabled) {
     if (isEnabled) {
-      chrome.storage.local.get(['intervalType', 'restDuration'], (settings) => {
-        if (settings.intervalType && settings.restDuration) {
+      chrome.storage.local.get(['intervalMinutes', 'restDuration'], (settings) => {
+        if (settings.intervalMinutes && settings.restDuration) {
           chrome.runtime.sendMessage({
             action: 'startTimer',
-            intervalType: settings.intervalType,
+            intervalMinutes: settings.intervalMinutes,
             restDuration: settings.restDuration
           });
         }
@@ -151,7 +150,13 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   saveSettings.addEventListener('click', () => {
+    const interval = parseInt(intervalMinutes.value, 10);
     const duration = parseInt(restDuration.value, 10);
+    
+    if (isNaN(interval) || interval < 1) {
+      showMessage('工作时长必须大于0分钟');
+      return;
+    }
     
     if (isNaN(duration) || duration < 1 || duration > 10) {
       showMessage('休息时长必须在1-10分钟之间');
@@ -160,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const settings = {
       isEnabled: true,
-      intervalType: intervalType.value,
+      intervalMinutes: interval,
       restDuration: duration
     };
 
@@ -176,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
       
       chrome.runtime.sendMessage({
         action: 'startTimer',
-        intervalType: intervalType.value,
+        intervalMinutes: interval,
         restDuration: duration
       });
     });

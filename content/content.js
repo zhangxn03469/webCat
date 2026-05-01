@@ -1,8 +1,18 @@
 let overlayElement = null;
 let countdownInterval = null;
 let restEndTime = null;
+let walkingCats = [];
+let catAnimationId = null;
+let sleepZoneElement = null;
 
 const DEFAULT_CAT_IMAGE = 'https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif';
+const CAT_GIFS = [
+  'https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif',
+  'https://media.giphy.com/media/13CoXDiaCcCoyk/giphy.gif',
+  'https://media.giphy.com/media/mlvseq9yvZhba/giphy.gif',
+  'https://media.giphy.com/media/VbnUQpnihPSIgIXuZv/giphy.gif',
+  'https://media.giphy.com/media/3o7TKqnN334sKq8MFO/giphy.gif'
+];
 
 function createOverlay() {
   if (overlayElement) {
@@ -43,6 +53,208 @@ function getCustomImage() {
   });
 }
 
+function createWalkingCat(index) {
+  const cat = document.createElement('div');
+  cat.className = 'walking-cat';
+  cat.id = `walking-cat-${index}`;
+  
+  const img = document.createElement('img');
+  img.src = CAT_GIFS[index % CAT_GIFS.length];
+  img.alt = 'Walking Cat';
+  cat.appendChild(img);
+  
+  document.body.appendChild(cat);
+  
+  return {
+    element: cat,
+    x: 0,
+    y: 0,
+    targetX: 0,
+    targetY: 0,
+    speed: 1 + Math.random() * 2,
+    direction: 1,
+    isMoving: true,
+    pauseTime: 0,
+    pauseDuration: 0
+  };
+}
+
+function initWalkingCats() {
+  const numCats = 3 + Math.floor(Math.random() * 3);
+  
+  for (let i = 0; i < numCats; i++) {
+    const cat = createWalkingCat(i);
+    resetCatPosition(cat, true);
+    walkingCats.push(cat);
+  }
+}
+
+function resetCatPosition(cat, randomSide = false) {
+  const screenWidth = window.innerWidth;
+  const screenHeight = window.innerHeight;
+  
+  if (randomSide) {
+    const side = Math.floor(Math.random() * 4);
+    switch (side) {
+      case 0:
+        cat.x = -100;
+        cat.y = Math.random() * (screenHeight - 100);
+        cat.direction = 1;
+        cat.targetX = screenWidth + 100;
+        cat.targetY = cat.y + (Math.random() - 0.5) * 200;
+        break;
+      case 1:
+        cat.x = screenWidth + 100;
+        cat.y = Math.random() * (screenHeight - 100);
+        cat.direction = -1;
+        cat.targetX = -100;
+        cat.targetY = cat.y + (Math.random() - 0.5) * 200;
+        break;
+      case 2:
+        cat.x = Math.random() * (screenWidth - 100);
+        cat.y = -100;
+        cat.direction = Math.random() > 0.5 ? 1 : -1;
+        cat.targetX = cat.x + (Math.random() - 0.5) * 200;
+        cat.targetY = screenHeight + 100;
+        break;
+      case 3:
+        cat.x = Math.random() * (screenWidth - 100);
+        cat.y = screenHeight + 100;
+        cat.direction = Math.random() > 0.5 ? 1 : -1;
+        cat.targetX = cat.x + (Math.random() - 0.5) * 200;
+        cat.targetY = -100;
+        break;
+    }
+  }
+  
+  updateCatPosition(cat);
+}
+
+function updateCatPosition(cat) {
+  cat.element.style.left = `${cat.x}px`;
+  cat.element.style.top = `${cat.y}px`;
+  
+  if (cat.direction < 0) {
+    cat.element.classList.add('flipped');
+  } else {
+    cat.element.classList.remove('flipped');
+  }
+}
+
+function animateCats() {
+  const screenWidth = window.innerWidth;
+  const screenHeight = window.innerHeight;
+  
+  walkingCats.forEach(cat => {
+    if (cat.pauseTime > 0) {
+      cat.pauseTime -= 16;
+      return;
+    }
+    
+    if (Math.random() < 0.005) {
+      cat.pauseTime = Math.random() * 2000 + 500;
+      return;
+    }
+    
+    if (Math.random() < 0.01) {
+      cat.direction *= -1;
+    }
+    
+    const dx = cat.targetX - cat.x;
+    const dy = cat.targetY - cat.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    if (distance < cat.speed * 2) {
+      resetCatPosition(cat, true);
+      return;
+    }
+    
+    const vx = (dx / distance) * cat.speed;
+    const vy = (dy / distance) * cat.speed;
+    
+    cat.x += vx;
+    cat.y += vy;
+    
+    if (vx > 0.5) {
+      cat.direction = 1;
+    } else if (vx < -0.5) {
+      cat.direction = -1;
+    }
+    
+    updateCatPosition(cat);
+    
+    if (Math.random() < 0.02) {
+      createCatParticle(cat.x + 40, cat.y + 40);
+    }
+  });
+  
+  catAnimationId = requestAnimationFrame(animateCats);
+}
+
+function createCatParticle(x, y) {
+  const particle = document.createElement('div');
+  particle.className = 'cat-particle';
+  
+  const colors = ['#FFD700', '#FFA500', '#FF69B4', '#87CEEB', '#98FB98'];
+  particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+  particle.style.left = `${x + (Math.random() - 0.5) * 30}px`;
+  particle.style.top = `${y}px`;
+  
+  document.body.appendChild(particle);
+  
+  setTimeout(() => {
+    particle.remove();
+  }, 2000);
+}
+
+function createSleepZone() {
+  sleepZoneElement = document.createElement('div');
+  sleepZoneElement.className = 'cat-sleep-zone';
+  
+  const numSleepingCats = 2 + Math.floor(Math.random() * 2);
+  for (let i = 0; i < numSleepingCats; i++) {
+    const sleepingCat = document.createElement('div');
+    sleepingCat.className = 'sleeping-cat';
+    sleepingCat.style.animationDelay = `${i * 0.5}s`;
+    
+    const img = document.createElement('img');
+    img.src = CAT_GIFS[i % CAT_GIFS.length];
+    img.alt = 'Sleeping Cat';
+    img.style.width = '60px';
+    img.style.height = '60px';
+    
+    const zzz = document.createElement('span');
+    zzz.className = 'zzz';
+    zzz.textContent = 'Z';
+    zzz.style.animationDelay = `${i * 0.3}s`;
+    
+    sleepingCat.appendChild(img);
+    sleepingCat.appendChild(zzz);
+    sleepZoneElement.appendChild(sleepingCat);
+  }
+  
+  document.body.appendChild(sleepZoneElement);
+}
+
+function stopCatAnimations() {
+  if (catAnimationId) {
+    cancelAnimationFrame(catAnimationId);
+    catAnimationId = null;
+  }
+  
+  walkingCats.forEach(cat => {
+    if (cat.element && cat.element.parentNode) {
+      cat.element.remove();
+    }
+  });
+  walkingCats = [];
+  
+  if (sleepZoneElement) {
+    sleepZoneElement.remove();
+    sleepZoneElement = null;
+  }
+}
+
 async function showOverlay(endTime) {
   createOverlay();
   restEndTime = endTime;
@@ -55,6 +267,10 @@ async function showOverlay(endTime) {
   } else {
     imageElement.src = DEFAULT_CAT_IMAGE;
   }
+
+  initWalkingCats();
+  createSleepZone();
+  animateCats();
 
   updateCountdown();
   
@@ -71,6 +287,8 @@ async function showOverlay(endTime) {
 }
 
 function hideOverlay() {
+  stopCatAnimations();
+  
   if (overlayElement) {
     overlayElement.classList.add('hidden');
     document.body.style.overflow = '';
