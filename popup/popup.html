@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cat GateKeeper</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="../assets/icon.svg" alt="Cat GateKeeper" class="logo">
+      <h1>Cat GateKeeper</h1>
+    </div>
+    
+    <div class="toggle-section">
+      <label class="toggle">
+        <input type="checkbox" id="extensionToggle">
+        <span class="slider"></span>
+      </label>
+      <span id="toggleLabel">已关闭</span>
+    </div>
+
+    <div id="settingsContainer" class="settings-container" style="display: none;">
+      <div class="setting-item">
+        <label for="intervalType">工作时长：</label>
+        <select id="intervalType">
+          <option value="hourly">每小时</option>
+          <option value="halfhourly">每半小时</option>
+        </select>
+      </div>
+
+      <div class="setting-item">
+        <label for="restDuration">休息时长：</label>
+        <input type="number" id="restDuration" min="1" max="10" value="5">
+        <span class="unit">分钟</span>
+        <small class="hint">最多休息10分钟</small>
+      </div>
+
+      <div class="setting-item">
+        <label for="customImage">自定义背景图（可选）：</label>
+        <div class="image-upload-area" id="imageUploadArea">
+          <input type="file" id="customImage" accept="image/jpeg,image/png,image/gif">
+          <div class="upload-placeholder">
+            <p>点击上传或拖拽图片到此处</p>
+            <p class="hint">支持 JPG、PNG、GIF 格式，最多1张</p>
+          </div>
+          <div class="image-preview" id="imagePreview" style="display: none;">
+            <img id="previewImg" src="" alt="预览">
+            <button id="removeImage" type="button">移除</button>
+          </div>
+        </div>
+      </div>
+
+      <button id="saveSettings" class="save-btn">保存设置</button>
+      
+      <div class="status-info">
+        <p id="currentStatus">当前状态：未设置</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

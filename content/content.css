@@ -1,0 +1,106 @@
+#cat-gatekeeper-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 999999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Microsoft YaHei', Arial, sans-serif;
+  color: white;
+  overflow: hidden;
+}
+
+#cat-gatekeeper-overlay * {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+#cat-gatekeeper-overlay .overlay-content {
+  text-align: center;
+  max-width: 800px;
+  padding: 40px;
+}
+
+#cat-gatekeeper-overlay .title {
+  font-size: 32px;
+  font-weight: 600;
+  margin-bottom: 30px;
+  color: #fff;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+#cat-gatekeeper-overlay .subtitle {
+  font-size: 18px;
+  margin-bottom: 40px;
+  color: #ccc;
+}
+
+#cat-gatekeeper-overlay .image-container {
+  width: 400px;
+  height: 300px;
+  margin: 0 auto 40px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+#cat-gatekeeper-overlay .image-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+#cat-gatekeeper-overlay .countdown-container {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 30px 50px;
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+}
+
+#cat-gatekeeper-overlay .countdown-label {
+  font-size: 16px;
+  color: #aaa;
+  margin-bottom: 10px;
+}
+
+#cat-gatekeeper-overlay .countdown-time {
+  font-size: 64px;
+  font-weight: 700;
+  color: #667eea;
+  text-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+}
+
+#cat-gatekeeper-overlay .tips {
+  margin-top: 30px;
+  font-size: 14px;
+  color: #999;
+}
+
+#cat-gatekeeper-overlay .tips p {
+  margin-bottom: 8px;
+}
+
+#cat-gatekeeper-overlay .loading {
+  font-size: 24px;
+  color: #667eea;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+#cat-gatekeeper-overlay .hidden {
+  display: none !important;
+}
